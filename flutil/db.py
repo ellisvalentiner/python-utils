@@ -1,6 +1,7 @@
 import logging
 import psycopg2
 from psycopg2 import pool
+from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 
 
@@ -9,7 +10,7 @@ MAX_CONNECTION_ATTEMPTS = 10
 
 class PoolManager:
     def __init__(self, connection_url, name=None, mincount=2, maxcount=40,
-                 cursor_factory=psycopg2.extras.RealDictCursor):
+                 cursor_factory=RealDictCursor):
         self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
         self.name = name or connection_url
 
