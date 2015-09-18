@@ -20,3 +20,27 @@ statement = 'insert into foo (bar, baz) values (?, ?)'
 with con.cursor(commit_on_close=True) as c:
 	c.execute(statement, (bar, baz))
 ```
+
+## flask_server.py
+Flask server backed by Tornado for multi-threaded connection handling
+
+Usage:
+
+```python
+from flask import Flask
+from flutil import flask_service
+
+app = Flask(__name__)
+
+@app.route('/foo', methods=['POST'])
+def foo():
+	...
+	
+@app.route('/bar', methods=['POST'])
+def bar():
+	...
+	
+if __name__ == '__main__':
+    service_name = 'foo'
+    flask_server.start_service(app, service_name)	
+
