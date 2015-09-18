@@ -8,21 +8,26 @@ from contextlib import contextmanager
 
 MAX_CONNECTION_ATTEMPTS = 10
 
+
 class PoolManager:
     @staticmethod
     def get_url_from_environment(name=None):
+        if name:
+            # Try name exactly as provided, upper-cased, and finally, with _DATABASE_URL appended.
+            # Accept the first name that exists
+            for env in (name, name.upper(), '_'.join([name.upper(), 'DATABASE_URL'])):
+                if env in os.environ:
+                    return os.environ.get(env), env
+
         # Default to nothing for the userdata database url, which is just DATABASE_URL
         env = 'DATABASE_URL'
-        if name:
-            env = '_'.join([name.upper(), 'DATABASE_URL'])
-
         return os.environ.get(env, None), env
 
     @classmethod
     def from_name(cls, name=None):
         url, env = cls.get_url_from_environment(name)
         if not url:
-            assert "Please specify a valid database, or ensure %s exists in your environment." % (env, )
+            assert 'Please specify a valid database, or ensure %s exists in your environment.' % (env, )
         return cls(connection_url=url, name=env)
 
     def __init__(self, connection_url, name=None, mincount=2, maxcount=40,

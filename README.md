@@ -11,7 +11,15 @@ from flutil import db
 
 db_url = 'postgres://foo:bar@baz:port/db_name'
 con = db.PoolManager(db_url)
+```
+or:
 
+```python
+env_var_name = 'FOO_DATABASE_URL'
+con = db.PoolManager.from_name(env_var_name)
+```
+
+```python-utils
 query = 'select * from foo where bar = (?)'
 with con.cursor() as c:
 	c.execute(query, (bar,))
@@ -22,7 +30,7 @@ with con.cursor(commit_on_close=True) as c:
 ```
 
 ## flask_server.py
-Flask server backed by Tornado for multi-threaded connection handling
+Flask application server backed by Tornado for multi-threaded connection handling.
 
 Usage:
 
