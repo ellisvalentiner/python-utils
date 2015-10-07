@@ -9,31 +9,60 @@ from contextlib import contextmanager
 MAX_CONNECTION_ATTEMPTS = 10
 
 
+class EnvironmentVariableNotFoundException(Exception):
+    pass
+
 class PoolManager:
+    connections = {}
+
     @staticmethod
     def get_url_from_environment(name=None):
-        if name:
-            # Try name exactly as provided, upper-cased, and finally, with _DATABASE_URL appended.
-            # Accept the first name that exists
-            for env in (name, name.upper(), '_'.join([name.upper(), 'DATABASE_URL'])):
-                if env in os.environ:
-                    return os.environ.get(env), env
+        """
+        Try name as upper-cased and with _DATABASE_URL appended,
+        accepting the first name that exists.
 
-        # Default to nothing for the userdata database url, which is just DATABASE_URL
-        env = 'DATABASE_URL'
-        return os.environ.get(env, None), env
+        """
+        attempts = (name.upper(), '%s_DATABASE_URL' % name.upper(), )
+
+        for env in attempts:
+            if env in os.environ:
+                return os.environ.get(env), env
+
+        raise EnvironmentVariableNotFoundException(\
+            "The envrionment variables %s were not found." % ' or '.join(attempts) )
 
     @classmethod
-    def from_name(cls, name=None):
-        url, env = cls.get_url_from_environment(name)
-        if not url:
-            assert 'Please specify a valid database, or ensure %s exists in your environment.' % (env, )
-        return cls(connection_url=url, name=env)
+    def from_name(cls, name=None, cached=True):
+        """
+        Return a pool instance by name (following our convention of NAME_DATABASE_URL)
+        first checking to see if it's already been created and returning that instance.
 
-    def __init__(self, connection_url, name=None, mincount=2, maxcount=40,
-                 cursor_factory=RealDictCursor):
-        self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
+        Unless the `cached` argument is False, in which case a new instance is always returned.
+
+        """
+        if not name:
+            name = 'DATABASE_URL'
+
+        url, env = cls.get_url_from_environment(name)
+
+        if not cached:
+            return cls(connection_url=url, name=env)
+
+        if url in cls.connections:
+            return cls.connections.get(url)
+
+        new_conn = cls(connection_url=url, name=env)
+        cls.connections[url] = new_conn
+        return new_conn
+
+    def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor):
+        self.connection_url = connection_url
         self.name = name or connection_url
+
+        self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
+
+    def __repr__(self):
+        return "<%s: %s>" % (self.__class__.__name__, self.name)
 
     def __del__(self):
         self._pool.closeall()
