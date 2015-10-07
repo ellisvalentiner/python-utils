@@ -1,10 +1,10 @@
 import os
 import logging
-import psycopg2
+from contextlib import contextmanager
 
+import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
-from contextlib import contextmanager
 
 MAX_CONNECTION_ATTEMPTS = 10
 
@@ -12,8 +12,9 @@ MAX_CONNECTION_ATTEMPTS = 10
 class EnvironmentVariableNotFoundException(Exception):
     pass
 
+
 class PoolManager:
-    connections = {}
+    _connections = {}
 
     @staticmethod
     def get_url_from_environment(name=None):
@@ -28,11 +29,11 @@ class PoolManager:
             if env in os.environ:
                 return os.environ.get(env), env
 
-        raise EnvironmentVariableNotFoundException(\
-            "The envrionment variables %s were not found." % ' or '.join(attempts) )
+        raise EnvironmentVariableNotFoundException(
+            "The envrionment variables %s were not found." % ' or '.join(attempts))
 
     @classmethod
-    def from_name(cls, name=None, cached=True):
+    def from_name(cls, name, **kwargs):
         """
         Return a pool instance by name (following our convention of NAME_DATABASE_URL)
         first checking to see if it's already been created and returning that instance.
@@ -43,22 +44,31 @@ class PoolManager:
         if not name:
             name = 'DATABASE_URL'
 
-        url, env = cls.get_url_from_environment(name)
+        url, env = PoolManager.get_url_from_environment(name)
 
-        if not cached:
-            return cls(connection_url=url, name=env)
+        return cls.from_url(url, **kwargs)
 
-        if url in cls.connections:
-            return cls.connections.get(url)
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        kwargs['connection_url'] = url
 
-        new_conn = cls(connection_url=url, name=env)
-        cls.connections[url] = new_conn
+        if not kwargs.get('cached', True):
+            return DatabasePool(**kwargs)
+
+        cache_key = hash(frozenset(kwargs.items()))
+
+        if cache_key in cls._connections:
+            return cls._connections.get(cache_key)
+
+        new_conn = DatabasePool(**kwargs)
+        cls._connections[cache_key] = new_conn
         return new_conn
 
+
+class DatabasePool:
     def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor):
         self.connection_url = connection_url
         self.name = name or connection_url
-
         self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
 
     def __repr__(self):
