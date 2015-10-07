@@ -14,6 +14,11 @@ class EnvironmentVariableNotFoundException(Exception):
 
 
 class PoolManager:
+    """
+    Provides convenience methods around creating DatabasePool objects, and
+    attempts to cache those connections when possible.
+
+    """
     _connections = {}
 
     @staticmethod
@@ -38,7 +43,8 @@ class PoolManager:
         Return a pool instance by name (following our convention of NAME_DATABASE_URL)
         first checking to see if it's already been created and returning that instance.
 
-        Unless the `cached` argument is False, in which case a new instance is always returned.
+        See the DatabasePool class below for more information on the additional
+        arguments that can be passed to this method.
 
         """
         if not name:
@@ -50,11 +56,20 @@ class PoolManager:
 
     @classmethod
     def from_url(cls, url, **kwargs):
+        """
+        Return a pool instance by Database URL.
+
+        See the DatabasePool class below for more information on the additional
+        arguments that can be passed to this method.
+
+        """
         kwargs['connection_url'] = url
 
+        # If cached=False is provided, return a fresh instance.
         if not kwargs.get('cached', True):
             return DatabasePool(**kwargs)
 
+        # Generate a hashing key based on the keyword arguments.
         cache_key = hash(frozenset(kwargs.items()))
 
         if cache_key in cls._connections:
@@ -66,6 +81,18 @@ class PoolManager:
 
 
 class DatabasePool:
+    """
+    Creates and manages a pool of connections to a database.
+
+    This wraps ThreadedConnectionPool, see http://initd.org/psycopg/docs/pool.html
+
+    - connection_url is a postgresql://user@host/database style DSN
+    - name is an optional nickname for the database connection
+    - mincount is the minimum number of connections to keep open
+    - maxcount is the maximum number of connections to have open
+    - cursor_factory defines the factory used for inflating database rows
+
+    """
     def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor, **kwargs):
         self.connection_url = connection_url
         self.name = name or connection_url
