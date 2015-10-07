@@ -50,7 +50,10 @@ class PoolManager:
         if not name:
             name = 'DATABASE_URL'
 
-        url, env = PoolManager.get_url_from_environment(name)
+        url, env = cls.get_url_from_environment(name)
+
+        # Set the name for the DatabasePool to the environment variable
+        kwargs['name'] = env
 
         return cls.from_url(url, **kwargs)
 
