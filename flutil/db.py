@@ -66,7 +66,7 @@ class PoolManager:
 
 
 class DatabasePool:
-    def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor):
+    def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor, **kwargs):
         self.connection_url = connection_url
         self.name = name or connection_url
         self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
