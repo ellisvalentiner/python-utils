@@ -10,5 +10,6 @@ setup(
     author_email='bryan@farmlogs.com',
     packages=['flutil'],
     url='https://github.com/FarmLogs/python-utils',
-    download_url='https://github.com/FarmLogs/python-utils/tarball/%s' % __version__
+    download_url='https://github.com/FarmLogs/python-utils/tarball/%s' % __version__,
+    install_requires=['psycopg2>=2.6.1', 'tornado==4.0.2', 'Flask==0.10.1']
 )
