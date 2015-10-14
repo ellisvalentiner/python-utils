@@ -2,15 +2,17 @@ import json
 
 class Point:
     def __init__(self, **geometry):
-        self.longitude = geometry['coordinates'][0]
-        self.latitude = geometry['coordinates'][1]
+        self.longitude = geometry.get('lon', geometry['coordinates'][0])
+        self.latitude = geometry.get('lat', geometry['coordinates'][1])
+        self.geodict = {'type': 'Point', 'coordinates': [self.longitude, self.latitude]}
+
+    @property
+    def dict(self):
+        return self.geodict
 
     @property
     def json(self):
-        return json.dumps({
-            'type': 'Point',
-            'coordinates': list(self.coordinates)
-        })
+        return json.dumps(self.geodict)
 
 def bounding_box(geom):
     vertices = [point for shape in geom['coordinates'] for point in shape]
