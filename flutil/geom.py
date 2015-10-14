@@ -2,9 +2,13 @@ import json
 
 class Point:
     def __init__(self, **geometry):
-        self.longitude = geometry.get('lon', geometry['coordinates'][0])
-        self.latitude = geometry.get('lat', geometry['coordinates'][1])
+        self.longitude = geometry['lon'] or geometry['coordinates'][0]
+        self.latitude = geometry['lat'] or geometry['coordinates'][1]
         self.geodict = {'type': 'Point', 'coordinates': [self.longitude, self.latitude]}
+
+    @classmethod
+    def from_lon_lat(cls, lon, lat):
+        return cls(lon=lon, lat=lat)
 
     @property
     def dict(self):
