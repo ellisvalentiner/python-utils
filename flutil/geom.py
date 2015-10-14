@@ -7,7 +7,7 @@ class Point:
         self.geodict = {'type': 'Point', 'coordinates': [self.longitude, self.latitude]}
 
     @classmethod
-    def from_lon_lat(cls, lon, lat):
+    def from_lat_lon(cls, lat, lon):
         return cls(lon=lon, lat=lat)
 
     @property
