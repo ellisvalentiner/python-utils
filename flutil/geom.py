@@ -1,6 +1,6 @@
 import json
 
-class Point:
+class Point(object):
     def __init__(self, **geometry):
         self.longitude = geometry['lon'] or geometry['coordinates'][0]
         self.latitude = geometry['lat'] or geometry['coordinates'][1]
