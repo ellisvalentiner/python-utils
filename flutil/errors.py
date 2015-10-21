@@ -1,5 +1,7 @@
+from functools import wraps
 import logging
 import os
+
 import bugsnag
 
 bugsnag.configure(api_key=os.getenv('BUGSNAG_API_KEY', ''),
@@ -19,6 +21,7 @@ def log_exception(e, context_msg=None):
 
 # decorator to use for quick and dirty bugsnag injections
 def with_bugsnag(function_to_snag):
+    @wraps(function_to_snag)
     def wrapped_except(*args, **kwargs):
         try:
             return function_to_snag(*args, **kwargs)
