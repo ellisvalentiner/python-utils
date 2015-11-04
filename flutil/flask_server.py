@@ -13,7 +13,7 @@ logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 MAX_WAIT_SECONDS_BEFORE_SHUTDOWN = 10
 
 
-def start_service(app, service_name):
+def start_service(app, service_name, num_processes=0):
     parser = argparse.ArgumentParser(description='Start {} service'.format(service_name))
     parser.add_argument('-p', '--port', default=8080, required=False, type=int)
     parser.add_argument('-d', '--debug', default=False, action='store_true', required=False)
@@ -51,7 +51,7 @@ def start_service(app, service_name):
         signal.signal(signal.SIGINT, sig_handler)
 
         http_server.bind(args.port)
-        http_server.start(0)  # Forks multiple sub-processes
+        http_server.start(num_processes)  # Forks multiple sub-processes
         IOLoop.current().start()
 
         logging.info('Goodbye')
