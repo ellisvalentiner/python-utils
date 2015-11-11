@@ -19,7 +19,11 @@ class Point(object):
         return json.dumps(self.geodict)
 
 def bounding_box(geom):
-    vertices = [point for shape in geom['coordinates'] for point in shape]
+    if geom['type'] == 'MultiPolygon':
+        vertices = [point for poly in geom['coordinates'] for shape in poly for point in shape]
+    else:
+        vertices = [point for shape in geom['coordinates'] for point in shape]
+
     lons, lats = zip(*vertices)
     return {'lat_min': min(lats),
             'lat_max': max(lats),
