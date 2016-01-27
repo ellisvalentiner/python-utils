@@ -87,7 +87,7 @@ class DatabasePool:
     """
     Creates and manages a pool of connections to a database.
 
-    This wraps ThreadedConnectionPool, see http://initd.org/psycopg/docs/pool.html
+    This wraps PersistentConnectionPool, see http://initd.org/psycopg/docs/pool.html
 
     - connection_url is a postgresql://user@host/database style DSN
     - name is an optional nickname for the database connection
@@ -99,7 +99,7 @@ class DatabasePool:
     def __init__(self, connection_url, name=None, mincount=2, maxcount=40, cursor_factory=RealDictCursor, **kwargs):
         self.connection_url = connection_url
         self.name = name or connection_url
-        self._pool = pool.ThreadedConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
+        self._pool = pool.PersistentConnectionPool(mincount, maxcount, connection_url, cursor_factory=cursor_factory)
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name)
