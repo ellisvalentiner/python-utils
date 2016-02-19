@@ -25,7 +25,7 @@ class Consumer(object):
         exchange_type: defaults to topic. don't need to touch this usually.
         queue: queue name
         routing_key: routing from exchange to queue
-        on_message_callback: the callback to run when a message hits the queue
+        on_message_callback: the callback to run when a message hits the queue. takes two arguments. (header_frame, body)
 
         use Consumer.run() to start and Consumer.stop() to stop
         """
@@ -241,14 +241,14 @@ class Consumer(object):
             LOGGER.info('Received message # %s from %s: %s',
                         basic_deliver.delivery_tag, properties.app_id, body)
         try:
-            self._on_message_callback(body)
+            self._on_message_callback(properties, body)
             self.acknowledge_message(basic_deliver.delivery_tag)
         except RetryException:
             LOGGER.warning('Caught a RetryException.  Requeueing: %s', basic_deliver.delivery_tag)
-            self.basic_nack(basic_deliver.delivery_tag, requeue=True)
+            self._channel.basic_nack(basic_deliver.delivery_tag, requeue=True)
         except RejectException:
             LOGGER.warning('Caught a RejectException. Rejecting: %s', basic_deliver.delivery_tag)
-            self.basic_nack(basic_deliver.delivery_tag, requeue=False)
+            self._channel.basic_nack(basic_deliver.delivery_tag, requeue=False)
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
