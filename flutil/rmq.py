@@ -6,6 +6,14 @@ LOG_FORMAT = ('%(levelname) -10s %(asctime)s %(name) -30s %(funcName) '
                       '-35s %(lineno) -5d: %(message)s')
 LOGGER = logging.getLogger(__name__)
 
+# Exception that should be thrown in your callback to requeue the message when it fails
+class RetryException(Exception):
+    pass
+
+# Exception that should be thrown in your callback to reject the message.
+class RejectException(Exception):
+    pass
+
 class Consumer(object):
     def __init__(self, amqp_url, amqp_options=["heartbeat_interval=10"], exchange=None, exchange_type='topic', queue=None, routing_key=None, on_message_callback=None, logging=True):
         """
@@ -157,7 +165,7 @@ class Consumer(object):
         """
         if self._logging:
             LOGGER.info('Declaring queue %s', queue_name)
-        self._channel.queue_declare(self.on_queue_declareok, queue_name)
+        self._channel.queue_declare(self.on_queue_declareok, queue_name, durable=True)
 
     def on_queue_declareok(self, method_frame):
         """Method invoked by pika when the Queue.Declare RPC call made in
@@ -228,28 +236,19 @@ class Consumer(object):
             self._channel.close()
 
     def on_message_wrap(self, unused_channel, basic_deliver, properties, body):
-        """Invoked by pika when a message is delivered from RabbitMQ. The
-        channel is passed for your convenience. The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
-        a redelivered flag for the message. The properties passed in is an
-        instance of BasicProperties with the message properties and the body
-        is the message that was sent.
-
-        :param pika.channel.Channel unused_channel: The channel object
-        :param pika.Spec.Basic.Deliver: basic_deliver method
-        :param pika.Spec.BasicProperties: properties
-        :param str|unicode body: The message body
-
-        """
+        """Invoked by pika when a message is delivered from RabbitMQ."""
         if self._logging:
             LOGGER.info('Received message # %s from %s: %s',
                         basic_deliver.delivery_tag, properties.app_id, body)
         try:
             self._on_message_callback(body)
             self.acknowledge_message(basic_deliver.delivery_tag)
-        except Exception as e:
+        except RetryException:
+            LOGGER.warning('Caught a RetryException.  Requeueing: %s', basic_deliver.delivery_tag)
+            self.basic_nack(basic_deliver.delivery_tag, requeue=True)
+        except RejectException:
+            LOGGER.warning('Caught a RejectException. Rejecting: %s', basic_deliver.delivery_tag)
             self.basic_nack(basic_deliver.delivery_tag, requeue=False)
-            raise e
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
