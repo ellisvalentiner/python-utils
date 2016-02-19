@@ -115,7 +115,8 @@ class Consumer(object):
         self._channel.add_on_close_callback(self.on_channel_closed)
         self._channel.exchange_declare(self.on_exchange_declareok,
                                        self._exchange,
-                                       self._exchange_type)
+                                       self._exchange_type,
+                                       durable=True)
 
     def on_channel_closed(self, channel, reply_code, reply_text):
         """Invoked by pika when RabbitMQ unexpectedly closes the channel.
@@ -243,8 +244,12 @@ class Consumer(object):
         if self._logging:
             LOGGER.info('Received message # %s from %s: %s',
                         basic_deliver.delivery_tag, properties.app_id, body)
-        self._on_message_callback(body)
-        self.acknowledge_message(basic_deliver.delivery_tag)
+        try:
+            self._on_message_callback(body)
+            self.acknowledge_message(basic_deliver.delivery_tag)
+        except Exception as e:
+            self.basic_nack(basic_deliver.delivery_tag, requeue=False)
+            raise e
 
     def acknowledge_message(self, delivery_tag):
         """Acknowledge the message delivery from RabbitMQ by sending a
