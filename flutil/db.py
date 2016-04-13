@@ -120,7 +120,7 @@ class DatabasePool:
                 test_cur = con.cursor()
                 test_cur.execute("SELECT 42;")
                 test_cur.close()
-                break;
+                break
             except psycopg2.DatabaseError, psycopg2.OperationalError:
                 pass
         else:
@@ -135,5 +135,5 @@ class DatabasePool:
         finally:
             try:
                 self._pool.putconn(con)
-            except psycopg2.pool.PoolError as e:
-                logging.warn(e.message)
+            except:
+                pass
