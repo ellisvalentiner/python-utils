@@ -81,3 +81,16 @@ Usage:
 def foo():
    ...
 ``` 
+
+Requires the following env vars:
+
++ `METRICS_HOST`
++ `METRICS_HOST_PORT`
++ `RELEASE_STAGE` (e.g., live/dev/stage)
++ `SERVICE_NAME` 
+
+Response code counters are named like so:
+`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.{RESPONSE_CODE}`
+
+Timers are named like so:
+`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.response_time_ms`
