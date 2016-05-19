@@ -50,5 +50,34 @@ def bar():
 	
 if __name__ == '__main__':
     service_name = 'foo'
-    flask_server.start_service(app, service_name)	
+    flask_server.start_service(app, service_name)
+```	
 
+## errors.py
+Decorator for forwarding uncaught exceptions to Bugsnag
+
+Usage:
+
+```python
+@with_bugsnag
+def foo():
+    ...
+```
+
+Requires the following env vars:
+
++ `BUGSNAG_RELEASE_STAGE` (e.g., live/dev/stage)
++ `BUGSNAG_API_KEY`
+
+
+## metrics.py
+Decorator for forwarding flask endpoint response code counts and timing info to statsd
+
+Usage:
+
+```python
+@app.route('foo')
+@with_metrics
+def foo():
+   ...
+``` 
