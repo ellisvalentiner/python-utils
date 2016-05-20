@@ -50,5 +50,47 @@ def bar():
 	
 if __name__ == '__main__':
     service_name = 'foo'
-    flask_server.start_service(app, service_name)	
+    flask_server.start_service(app, service_name)
+```	
 
+## errors.py
+Decorator for forwarding uncaught exceptions to Bugsnag
+
+Usage:
+
+```python
+@with_bugsnag
+def foo():
+    ...
+```
+
+Requires the following env vars:
+
++ `BUGSNAG_RELEASE_STAGE` (e.g., live/dev/stage)
++ `BUGSNAG_API_KEY`
+
+
+## metrics.py
+Decorator for forwarding flask endpoint response code counts and timing info to statsd
+
+Usage:
+
+```python
+@app.route('foo')
+@with_metrics
+def foo():
+   ...
+``` 
+
+Requires the following env vars:
+
++ `METRICS_HOST`
++ `METRICS_HOST_PORT`
++ `RELEASE_STAGE` (e.g., live/dev/stage)
++ `SERVICE_NAME` 
+
+Response code counters are named like so:
+`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.{RESPONSE_CODE}`
+
+Timers are named like so:
+`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.response_time_ms`
