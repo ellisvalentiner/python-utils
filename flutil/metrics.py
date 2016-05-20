@@ -5,12 +5,17 @@ from functools import wraps
 import statsd
 
 
-METRICS_HOST = os.getenv('METRICS_HOST', '52.72.43.118')
+METRICS_HOST = os.getenv('METRICS_HOST')
 METRICS_PORT = int(os.getenv('METRICS_HOST_PORT', 8125))
 RELEASE_STAGE = os.getenv('RELEASE_STAGE', 'undefined')
 SERVICE_NAME = os.getenv('SERVICE_NAME', 'undefined')
 PREFIX = '{}.{}'.format(RELEASE_STAGE, SERVICE_NAME)
-_statsd_client = statsd.StatsClient(METRICS_HOST, METRICS_PORT, PREFIX)
+
+if METRICS_HOST:
+    _statsd_client = statsd.StatsClient(METRICS_HOST, METRICS_PORT, PREFIX)
+else:
+    print "warning - METRICS_HOST not set, not forwarding metrics"
+    _statsd_client = None
 
 
 def with_metrics(function_to_wrap):
@@ -18,6 +23,9 @@ def with_metrics(function_to_wrap):
     Add this decorator to any Flask route to forward response times and status code counters.
     Note: be sure this decorator is placed below Flask's @app.route decorator
     """
+    if not _statsd_client:
+        return function_to_wrap
+
     endpoint = '{}.{}'.format(function_to_wrap.__module__, function_to_wrap.__name__)
 
     @wraps(function_to_wrap)
