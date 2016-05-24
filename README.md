@@ -90,7 +90,7 @@ Requires the following env vars:
 + `SERVICE_NAME` 
 
 Response code counters are named like so:
-`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.{RESPONSE_CODE}`
+`{RELEASE_STAGE}.{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.{RESPONSE_CODE}`
 
 Timers are named like so:
-`{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.response_time_ms`
+`{RELEASE_STAGE}.{SERVICE_NAME}.{MODULE_NAME}.{FUNCTION_NAME}.response_time_ms`
